@@ -34,15 +34,15 @@ Scripts must be executed in the same order as shown below
 $ qemu-system-x86_64 -drive format=raw,$LFS/iso/lfs.iso -nographic -enable-kvm -m 512M
 
 * Below procedure should work seemlessly\
-$ mkdir -p $LFS/lfs-source; wget --input-file=$LFS/lfs-packages.txt --continue --directory-prefix=$LFS/lfs-source\
 $ mkdir -p $LFS/automate-lfs-build\
 $ git clone https://github.com/ranjithum/automate-lfs-build $LFS/automate-lfs-build\
-$ cd $LFS/automate-lfs-build/\
+$ cd $LFS/automate-lfs-build\
+$ mkdir -p $LFS/lfs-source; wget --input-file=./lfs-packages.txt --continue --directory-prefix=$LFS/lfs-source\
 $ ./version-check.sh\
 $ ./setup_lfs_user\
 $ su - lfs\
-$ cd automate-lfs-build/\
+$ cd automate-lfs-build\
 $ ./build_toolchain\
 $ exit\
 $ ./build_packages\
-$ ./create_image\
+$ ./create_image
