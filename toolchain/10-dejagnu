@@ -1,0 +1,27 @@
+#!/bin/bash
+
+. "$(dirname "$0")"/../common/common_source
+NAME=dejagnu
+VERSION=${DEJAGNU_VER}
+FETCH_URL="http://ftp.gnu.org/gnu/dejagnu/$NAME-$VERSION.tar.gz"
+TARFILE=$NAME-$VERSION.tar.gz
+
+configure()
+{
+    # For some reason building of DejaGNU fails :(
+    #default_configure "$TMP"/"$NAME"-"$VERSION"
+    :
+}
+
+build()
+{
+    # For some reason building of DejaGNU fails :(, Hence doing nothing
+    :
+}
+
+build_install()
+{
+    # For some reason building of DejaGNU fails :(, Hence doing nothing
+    :
+}
+. "$(dirname "$0")"/../common/common_exec

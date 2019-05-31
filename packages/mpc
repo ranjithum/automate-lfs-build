@@ -1,0 +1,38 @@
+#!/bin/bash
+
+. "$(dirname "$0")"/../common/common_source
+NAME=mpc
+VERSION=${MPC_VER}
+FETCH_URL="https://ftp.gnu.org/gnu/mpc/$NAME-$VERSION.tar.gz"
+TARFILE=$NAME-$VERSION.tar.gz
+
+fetch()
+{
+    :
+}
+
+configure()
+{
+    cd "$TMP"/"$NAME"-"$VERSION"
+    mkdir build
+    cd build
+
+    BUILD_PATH=$(pwd)
+    ../configure --prefix=/usr              \
+        --disable-static                    \
+        --docdir=/usr/share/doc/mpc-1.1.0 >>"$LOGFILE" 2>&1
+}
+
+post_build()
+{
+     cd "$BUILD_PATH"
+     make "$SILENT_MAKE" "$MAKE_JOBS" html >>"$LOGFILE" 2>&1
+}
+
+post_install()
+{
+    cd "$BUILD_PATH"
+    make "$SILENT_MAKE" "$MAKE_JOBS" install-html >>"$LOGFILE" 2>&1
+}
+
+. "$(dirname "$0")"/../common/common_exec

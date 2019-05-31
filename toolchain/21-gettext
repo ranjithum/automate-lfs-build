@@ -1,0 +1,45 @@
+#!/bin/bash
+
+. "$(dirname "$0")"/../common/common_source
+NAME=gettext
+VERSION=${GETTEXT_VER}
+FETCH_URL="http://ftp.gnu.org/gnu/gettext/$NAME-$VERSION.tar.xz"
+TARFILE=$NAME-$VERSION.tar.xz
+
+configure()
+{
+    cd "$TMP"/"$NAME"-"$VERSION"
+    mkdir build
+    cd build
+    BUILD_PATH=$(pwd)
+
+    EMACS="no" ../gettext-tools/configure --prefix=/tools \
+        --disable-shared >>"$LOGFILE" 2>&1
+}
+
+build()
+{
+    cd "$BUILD_PATH"
+    make "$MAKE_JOBS" -C gnulib-lib >>"$LOGFILE" 2>&1
+    if [ $? -ne 0 ]; then return $?;fi
+    
+    make -C intl pluralx.c >>"$LOGFILE" 2>&1
+    if [ $? -ne 0 ]; then return $?;fi
+    
+    make "$MAKE_JOBS" -C src msgfmt >>"$LOGFILE" 2>&1
+    if [ $? -ne 0 ]; then return $?;fi
+    
+    make "$MAKE_JOBS" -C src msgmerge >>"$LOGFILE" 2>&1
+    if [ $? -ne 0 ]; then return $?;fi
+    
+    make "$MAKE_JOBS" -C src xgettext >>"$LOGFILE" 2>&1
+    if [ $? -ne 0 ]; then return $?;fi
+}
+
+build_install()
+{
+    cd "$BUILD_PATH"
+    cp -v src/{msgfmt,msgmerge,xgettext} /tools/bin >>"$LOGFILE" 2>&1
+}
+
+. "$(dirname "$0")"/../common/common_exec

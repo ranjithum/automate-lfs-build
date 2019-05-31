@@ -1,0 +1,25 @@
+#!/bin/bash
+
+. "$(dirname "$0")"/../common/common_source
+NAME=bash
+VERSION=${BASH_VER}
+FETCH_URL="http://ftp.gnu.org/gnu/bash/$NAME-$VERSION.tar.gz"
+TARFILE=$NAME-$VERSION.tar.gz
+
+configure()
+{
+    cd "$TMP"/"$NAME"-"$VERSION"
+    mkdir build
+    cd build
+    BUILD_PATH=$(pwd)
+
+    ../configure --prefix=/tools \
+        --without-bash-malloc >>"$LOGFILE" 2>&1
+}
+
+post_install()
+{
+    ln -sv bash /tools/bin/sh >>"$LOGFILE" 2>&1
+}
+
+. "$(dirname "$0")"/../common/common_exec

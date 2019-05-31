@@ -1,0 +1,66 @@
+#!/bin/bash
+
+ME=$(basename "$0")
+LOGPATH="/tmp/lfs-log"
+LOGFILE=${LOGPATH}/${ME}.txt
+TMP="/tmp/lfs-tmpbuild"
+SRCDIR="/lfs-source"
+FILE_DB="${LOGPATH}/file_db.txt"
+SILENT_MAKE="-s"
+JOBS=$(($(nproc) * 4))
+MAKE_JOBS="-j$JOBS"
+BUILD_PATH=
+
+. "$(dirname "$0")"/../common/pkgversion
+
+[ ! -d "$TMP" ] && mkdir -p "$TMP"
+[ ! -d "$LOGPATH" ] && mkdir -p "$LOGPATH"
+[ ! -d "$SRCDIR" ] && mkdir -p "$SRCDIR"
+
+[ -f "$LOGFILE" ] && rm -rf "$LOGFILE"
+
+default_extract()
+{
+    local EXTRACT_DIR=$TMP
+    tar -xf "$1" -C "$EXTRACT_DIR"
+}
+
+default_fetch()
+{
+    local DEST_DIR=$SRCDIR
+    wget --quiet --directory-prefix="$DEST_DIR" "$1"
+}
+
+default_configure()
+{
+    cd "$1"
+    mkdir build; cd build; BUILD_PATH=$(pwd)
+    ../configure --prefix=/tools >>"$LOGFILE" 2>&1
+}
+
+default_configure_chroot()
+{
+    cd "$1"
+    mkdir build
+    cd build
+    BUILD_PATH=$(pwd)
+
+    ../configure --prefix=/usr >>"$LOGFILE" 2>&1
+}
+
+default_cleanup()
+{
+    rm -rf "$1"
+}
+
+add_to_filedb()
+{
+    echo "$ME" >> "$FILE_DB"
+}
+
+clear_env()
+{
+    ME=
+    LOGFILE=
+    BUILD_PATH=
+}

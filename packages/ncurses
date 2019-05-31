@@ -1,0 +1,55 @@
+#!/bin/bash
+
+. "$(dirname "$0")"/../common/common_source
+NAME=ncurses
+VERSION=${NCURSES_VER}
+TARFILE=$NAME-$VERSION.tar.gz
+FETCH_URL="http://ftp.gnu.org/gnu/ncurses/$TARFILE"
+
+fetch()
+{
+    # wget is not availabe in chroot, hence prefetch it
+    if [ ! -f "${SRCDIR}"/"$TARFILE" ]; then
+        echo "This package is not availabe.. Please download it manually from $FETCH_URL and place it inside /lfs-source folder"
+        return 1
+    fi
+}
+
+patchup()
+{
+    cd "$TMP"/"$NAME"-"$VERSION"
+    sed -i '/LIBTOOL_INSTALL/d' c++/Makefile.in
+}
+
+configure()
+{
+    cd "$TMP"/"$NAME"-"$VERSION"
+    mkdir build
+    cd build
+    BUILD_PATH=$(pwd)
+    ../configure --prefix=/usr          \
+        --mandir=/usr/share/man         \
+        --with-shared --without-debug   \
+        --without-normal                \
+        --enable-pc-files               \
+        --enable-widec >>"$LOGFILE" 2>&1
+}
+
+post_install()
+{
+    {
+    mv -v /usr/lib/libncursesw.so.6* /lib
+    ln -sfv ../../lib/$(readlink /usr/lib/libncursesw.so) /usr/lib/libncursesw.so
+    for lib in ncurses form panel menu ; do
+        rm -vf                    /usr/lib/lib${lib}.so
+        echo "INPUT(-l${lib}w)" > /usr/lib/lib${lib}.so
+        ln -sfv ${lib}w.pc        /usr/lib/pkgconfig/${lib}.pc
+    done
+
+    rm -vf                     /usr/lib/libcursesw.so
+    echo "INPUT(-lncursesw)" > /usr/lib/libcursesw.so
+    ln -sfv libncurses.so      /usr/lib/libcurses.so
+    } >>"$LOGFILE" 2>&1
+}
+
+. "$(dirname "$0")"/../common/common_exec

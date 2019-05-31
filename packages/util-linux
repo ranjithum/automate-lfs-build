@@ -1,0 +1,46 @@
+#!/bin/bash
+
+. "$(dirname "$0")"/../common/common_source
+NAME=util-linux
+VERSION=$UTILLINUX_VER
+TARFILE=$NAME-$VERSION.tar.xz
+FETCH_URL="https://www.kernel.org/pub/linux/utils/util-linux/v2.33/$TARFILE"
+
+fetch()
+{
+    # wget is not availabe in chroot, hence prefetch it
+    if [ ! -f "${SRCDIR}"/"$TARFILE" ]; then
+        echo "This package is not availabe.. Please download it manually and place it inside /lfs-source folder"
+        return 1
+    fi
+}
+
+pre_configure()
+{
+    mkdir -p /var/lib/hwclock
+    rm -f /usr/include/{blkid,libmount,uuid}
+}
+
+configure()
+{
+    cd "$TMP"/"$NAME"-"$VERSION"
+    mkdir build
+    cd build
+    BUILD_PATH=$(pwd)
+
+    ../configure ADJTIME_PATH=/var/lib/hwclock/adjtime   \
+            --docdir=/usr/share/doc/util-linux-2.33.1 \
+            --disable-chfn-chsh  \
+            --disable-login      \
+            --disable-nologin    \
+            --disable-su         \
+            --disable-setpriv    \
+            --disable-runuser    \
+            --disable-pylibmount \
+            --disable-static     \
+            --without-python     \
+            --without-systemd    \
+            --without-systemdsystemunitdir >>"$LOGFILE" 2>&1
+}
+
+. "$(dirname "$0")"/../common/common_exec

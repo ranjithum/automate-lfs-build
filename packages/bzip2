@@ -1,0 +1,66 @@
+#!/bin/bash
+
+. "$(dirname "$0")"/../common/common_source
+NAME=bzip2
+VERSION=$BZIP_VER
+TARFILE=$NAME-$VERSION.tar.gz
+FETCH_URL="http://anduin.linuxfromscratch.org/LFS/$TARFILE"
+FETCH_PATCH="http://www.linuxfromscratch.org/patches/lfs/8.4/bzip2-1.0.6-install_docs-1.patch"
+
+fetch()
+{
+    # wget is not availabe in chroot, hence prefetch it
+    if [ ! -f "${SRCDIR}"/"$TARFILE" ]; then
+        echo "This package is not availabe.. Please download it manually from here $FETCH_URL and place it inside /lfs-source folder"
+        return 1
+    fi
+
+    if [ ! -f "${SRCDIR}"/bzip2-1.0.6-install_docs-1.patch ]; then
+        echo "Patch for bzip2 not available.. Please download it manually from here $FETCH_PATCH and place it inside /lfs-source folder"
+        return 1
+    fi
+    return 0
+}
+
+patchup()
+{
+    cd "$TMP"/"$NAME"-"$VERSION"
+    patch -Np1 -i "$SRCDIR"/bzip2-1.0.6-install_docs-1.patch >>"$LOGFILE" 2>&1
+    [ $? -ne 0 ] && return 1
+    sed -i 's@\(ln -s -f \)$(PREFIX)/bin/@\1@' Makefile
+    sed -i "s@(PREFIX)/man@(PREFIX)/share/man@g" Makefile
+}
+
+configure()
+{
+    cd "$TMP"/"$NAME"-"$VERSION"
+    BUILD_PATH=$(pwd)
+}
+
+pre_build()
+{
+    cd "$BUILD_PATH"
+    make "$SILENT_MAKE" "$MAKE_JOBS" -f Makefile-libbz2_so  >>"$LOGFILE" 2>&1
+    make "$SILENT_MAKE" "$MAKE_JOBS" clean >>"$LOGFILE" 2>&1
+}
+
+build_install()
+{
+    cd "$BUILD_PATH"
+    make "$SILENT_MAKE" "$MAKE_JOBS" PREFIX=/usr install >>"$LOGFILE" 2>&1
+}
+
+post_install()
+{
+    cd "$BUILD_PATH"
+    {
+        cp -v bzip2-shared /bin/bzip2
+        cp -av libbz2.so* /lib
+        ln -sv ../../lib/libbz2.so.1.0 /usr/lib/libbz2.so
+        rm -v /usr/bin/{bunzip2,bzcat,bzip2}
+        ln -sv bzip2 /bin/bunzip2
+        ln -sv bzip2 /bin/bzcat
+    } >>"$LOGFILE" 2>&1
+}
+
+. "$(dirname "$0")"/../common/common_exec

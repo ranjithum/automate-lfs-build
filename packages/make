@@ -1,0 +1,29 @@
+#!/bin/bash
+
+. "$(dirname "$0")"/../common/common_source
+NAME=make
+VERSION=$MAKE_VER
+TARFILE=$NAME-$VERSION.tar.bz2
+FETCH_URL="http://ftp.gnu.org/gnu/make/$TARFILE"
+
+fetch()
+{
+    # wget is not availabe in chroot, hence prefetch it
+    if [ ! -f "${SRCDIR}"/"$TARFILE" ]; then
+        echo "This package is not availabe.. Please download it manually and place it inside /lfs-source folder"
+        return 1
+    fi
+}
+
+patchup()
+{
+    cd "$TMP"/"$NAME"-"$VERSION"
+    sed -i '211,217 d; 219,229 d; 232 d' glob/glob.c
+}
+
+configure()
+{
+    default_configure_chroot "$TMP"/"$NAME"-"$VERSION"
+}
+
+. "$(dirname "$0")"/../common/common_exec

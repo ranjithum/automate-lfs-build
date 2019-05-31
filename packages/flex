@@ -1,0 +1,33 @@
+#!/bin/bash
+
+. "$(dirname "$0")"/../common/common_source
+
+NAME=flex
+VERSION=${FLEX_VER}
+FETCH_URL="https://github.com/westes/flex/releases/download/v2.6.4/$NAME-$VERSION.tar.gz"
+TARFILE=$NAME-$VERSION.tar.gz
+
+fetch()
+{
+    # wget is not availabe in chroot, hence prefetch it
+    :
+}
+
+configure()
+{
+    cd "$TMP"/"$NAME"-"$VERSION"
+    mkdir build
+    cd build
+    BUILD_PATH=$(pwd)
+
+    HELP2MAN=/tools/bin/true ../configure --prefix=/usr \
+        --docdir=/usr/share/doc/flex-2.6.4 >>"$LOGFILE" 2>&1 
+}
+
+post_install()
+{
+    ln -sv flex /usr/bin/lex >>"$LOGFILE" 2>&1
+}
+
+. "$(dirname "$0")"/../common/common_exec
+

@@ -1,0 +1,59 @@
+#!/bin/bash
+
+. "$(dirname "$0")"/../common/common_source
+NAME=vim
+VERSION=$VIM_VER
+TARFILE=$NAME-$VERSION.tar.bz2
+FETCH_URL="ftp://ftp.vim.org/pub/vim/unix/$TARFILE"
+
+fetch()
+{
+    # wget is not availabe in chroot, hence prefetch it
+    if [ ! -f "${SRCDIR}"/"$TARFILE" ]; then
+        echo "This package is not availabe.. Please download it manually and place it inside /lfs-source folder"
+        return 1
+    fi
+}
+
+extract()
+{
+    [ -d "${TMP}"/vim81 ] && rm -rf "${TMP}"/vim81
+    default_extract "${SRCDIR}"/"$TARFILE"
+}
+
+configure()
+{
+    cd "$TMP"/vim81
+    BUILD_PATH=$(pwd)
+    ./configure --prefix=/usr >>"$LOGFILE" 2>&1
+}
+
+post_install()
+{
+    {
+        ln -sv vim /usr/bin/vi
+        for L in  /usr/share/man/{,*/}man1/vim.1; do     ln -sv vim.1 $(dirname $L)/vi.1; done
+        ln -sv ../vim/vim81/doc /usr/share/doc/vim-8.1
+    } >>"$LOGFILE" 2>&1
+    cat > /etc/vimrc << "EOF"
+" Begin /etc/vimrc
+" Ensure defaults are set before customizing settings, not after
+source $VIMRUNTIME/defaults.vim
+let skip_defaults_vim=1
+set nocompatible
+set backspace=2
+set mouse=
+syntax on
+if (&term == "xterm") || (&term == "putty")
+  set background=dark
+endif
+" End /etc/vimrc
+EOF
+}
+
+cleanup()
+{
+    default_cleanup "$TMP"/vim81 
+}
+
+. "$(dirname "$0")"/../common/common_exec

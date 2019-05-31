@@ -1,0 +1,24 @@
+#!/bin/bash
+
+. "$(dirname "$0")"/../common/common_source
+NAME=zlib
+VERSION=${ZLIB_VER}
+FETCH_URL="https://zlib.net/$NAME-$VERSION.tar.xz"
+TARFILE=$NAME-$VERSION.tar.xz
+
+configure()
+{
+    default_configure_chroot "$TMP"/"$NAME"-"$VERSION"
+}
+
+post_install()
+{
+    cd "$BUILD_PATH"
+    {
+    mv -v /usr/lib/libz.so.* /lib
+    ln -sfv ../../lib/$(readlink /usr/lib/libz.so) /usr/lib/libz.so
+    } >>"$LOGFILE" 2>&1 
+}
+
+
+. "$(dirname "$0")"/../common/common_exec

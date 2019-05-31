@@ -1,0 +1,58 @@
+#!/bin/bash
+
+. "$(dirname "$0")"/../common/common_source
+NAME=readline
+VERSION=${READLINE_VER}
+TARFILE=$NAME-$VERSION.tar.gz
+FETCH_URL="http://ftp.gnu.org/gnu/readline/$TARFILE"
+
+fetch()
+{
+    # wget is not availabe in chroot, hence prefetch it
+    if [ ! -f "${SRCDIR}"/"$TARFILE" ]; then
+        echo "This package is not availabe.. Please download it manually and place it inside /lfs-source folder"
+        return 1
+    fi
+}
+
+patchup()
+{
+    cd "$TMP"/"$NAME"-"$VERSION"
+    sed -i '/MV.*old/d' Makefile.in
+    sed -i '/{OLDSUFF}/c:' support/shlib-install
+}
+
+configure()
+{
+    cd "$TMP"/"$NAME"-"$VERSION"
+    mkdir build
+    cd build
+    BUILD_PATH=$(pwd)
+    ../configure --prefix=/usr              \
+        --disable-static                    \
+        --docdir=/usr/share/doc/readline-8.0  >>"$LOGFILE" 2>&1
+}
+
+build()
+{
+    cd "$BUILD_PATH"
+    make "$SILENT_MAKE" "$MAKE_JOBS" SHLIB_LIBS="-L/tools/lib -lncursesw" >>"$LOGFILE" 2>&1
+}
+
+build_install()
+{
+    cd "$BUILD_PATH"
+    make "$SILENT_MAKE" "$MAKE_JOBS" SHLIB_LIBS="-L/tools/lib -lncursesw" install >>"$LOGFILE" 2>&1
+}
+
+post_install()
+{
+    {
+    mv -v /usr/lib/lib{readline,history}.so.* /lib
+    chmod -v u+w /lib/lib{readline,history}.so.*
+    ln -sfv ../../lib/$(readlink /usr/lib/libreadline.so) /usr/lib/libreadline.so
+    ln -sfv ../../lib/$(readlink /usr/lib/libhistory.so ) /usr/lib/libhistory.so
+    } >>"$LOGFILE" 2>&1
+}
+
+. "$(dirname "$0")"/../common/common_exec

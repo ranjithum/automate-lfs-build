@@ -1,0 +1,21 @@
+#!/bin/bash
+
+. "$(dirname "$0")"/../common/common_source
+NAME=m4
+VERSION=${M4_VER}
+FETCH_URL="http://ftp.gnu.org/gnu/m4/$NAME-$VERSION.tar.xz"
+TARFILE=$NAME-$VERSION.tar.xz
+
+patchup()
+{
+    cd "$TMP"/"$NAME"-"$VERSION"
+    sed -i 's/IO_ftrylockfile/IO_EOF_SEEN/' lib/*.c
+    echo "#define _IO_IN_BACKUP 0x100" >> lib/stdio-impl.h
+}
+
+configure()
+{
+    default_configure_chroot "$TMP"/"$NAME"-"$VERSION"
+}
+
+. "$(dirname "$0")"/../common/common_exec

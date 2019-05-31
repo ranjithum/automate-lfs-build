@@ -1,0 +1,32 @@
+#!/bin/bash
+
+. "$(dirname "$0")"/../common/common_source
+NAME=expat
+VERSION=$EXPAT_VER
+TARFILE=$NAME-$VERSION.tar.bz2
+FETCH_URL="https://prdownloads.sourceforge.net/expat/$TARFILE"
+
+fetch()
+{
+    # wget is not availabe in chroot, hence prefetch it
+    if [ ! -f "${SRCDIR}"/"$TARFILE" ]; then
+        echo "This package is not availabe.. Please download it manually and place it inside /lfs-source folder"
+        return 1
+    fi
+}
+
+patchup()
+{
+    cd "$TMP"/"$NAME"-"$VERSION"
+    sed -i 's|usr/bin/env |bin/|' run.sh.in
+}
+
+configure()
+{
+    cd "$TMP"/"$NAME"-"$VERSION"
+    mkdir build; cd build; BUILD_PATH=$(pwd)
+
+    ../configure --prefix=/usr --disable-static --docdir=/usr/share/doc/expat-2.2.6 >>"$LOGFILE" 2>&1
+}
+
+. "$(dirname "$0")"/../common/common_exec

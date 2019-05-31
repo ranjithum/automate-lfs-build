@@ -1,0 +1,24 @@
+#!/bin/bash
+
+. "$(dirname "$0")"/../common/common_source
+NAME=iana-etc
+VERSION=$IANAETC_VER
+TARFILE=$NAME-$VERSION.tar.bz2
+FETCH_URL="http://anduin.linuxfromscratch.org/LFS/$TARFILE"
+
+fetch()
+{
+    # wget is not availabe in chroot, hence prefetch it
+    if [ ! -f "${SRCDIR}"/"$TARFILE" ]; then
+        echo "This package is not availabe.. Please download it manually and place it inside /lfs-source folder"
+        return 1
+    fi
+}
+
+configure()
+{
+    cd "$TMP"/"$NAME"-"$VERSION"
+    BUILD_PATH=$(pwd)
+}
+
+. "$(dirname "$0")"/../common/common_exec

@@ -1,0 +1,38 @@
+#!/bin/bash
+
+. "$(dirname "$0")"/../common/common_source
+NAME=gawk
+VERSION=$GAWK_VER
+TARFILE=$NAME-$VERSION.tar.xz
+FETCH_URL="http://ftp.gnu.org/gnu/gawk/$TARFILE"
+
+fetch()
+{
+    # wget is not availabe in chroot, hence prefetch it
+    if [ ! -f "${SRCDIR}"/"$TARFILE" ]; then
+        echo "This package is not availabe.. Please download it manually and place it inside /lfs-source folder"
+        return 1
+    fi
+}
+
+patchup()
+{
+    cd "$TMP"/"$NAME"-"$VERSION"
+    sed -i 's/extras//' Makefile.in
+}
+
+configure()
+{
+    default_configure_chroot "$TMP"/"$NAME"-"$VERSION"
+}
+
+post_install()
+{
+    cd "$BUILD_PATH"
+    {
+    mkdir -v /usr/share/doc/gawk-4.2.1
+    cp ../gawk-4.2.1/doc/{awkforai.txt,*.{eps,pdf,jpg}} /usr/share/doc/gawk-4.2.1
+    } >>"$LOGFILE" 2>&1
+}
+
+. "$(dirname "$0")"/../common/common_exec

@@ -1,0 +1,94 @@
+#!/bin/bash
+
+. "$(dirname "$0")"/../common/common_source
+NAME=eudev
+VERSION=$EUDEV_VER
+TARFILE=$NAME-$VERSION.tar.gz
+FETCH_URL="https://dev.gentoo.org/~blueness/eudev/$TARFILE"
+FETCH_PATCH="http://anduin.linuxfromscratch.org/LFS/udev-lfs-20171102.tar.bz2"
+
+fetch()
+{
+    # wget is not availabe in chroot, hence prefetch it
+    if [ ! -f "${SRCDIR}"/"$TARFILE" ]; then
+        echo "This package is not availabe.. Please download it manually and place it inside /lfs-source folder"
+        return 1
+    fi
+
+    if [ ! -f "${SRCDIR}"/udev-lfs-20171102.tar.bz2 ]; then
+        echo "$FETCH_PATCH is not availabe.. Please download it manually and place it inside /lfs-source folder"
+        return 1
+    fi
+
+}
+
+extract()
+{
+    [ -d "${TMP}"/"${NAME}"-"${VERSION}" ] && rm -rf "${TMP}"/"${NAME}"-"${VERSION}"
+
+    default_extract "${SRCDIR}"/"$TARFILE"
+    if [ $? -ne 0 ]; then
+        echo "Extracting ${SRCDIR}/$TARFILE failed"
+        return 1
+    fi
+
+    default_extract "${SRCDIR}"/udev-lfs-20171102.tar.bz2
+    if [ $? -ne 0 ]; then
+        echo "Extracting ${SRCDIR}/udev-lfs-20171102.tar.bz2 failed"
+        return 1
+    fi
+    return 0
+}
+
+configure()
+{
+    cd "$TMP"/"$NAME"-"$VERSION"
+    mkdir build
+    cd build
+    BUILD_PATH=$(pwd)
+
+    cat > config.cache << "EOF"
+HAVE_BLKID=1
+BLKID_LIBS="-lblkid"
+BLKID_CFLAGS="-I/tools/include"
+EOF
+    ../configure --prefix=/usr          \
+            --bindir=/sbin              \
+            --sbindir=/sbin             \
+            --libdir=/usr/lib           \
+            --sysconfdir=/etc           \
+            --libexecdir=/lib           \
+            --with-rootprefix=          \
+            --with-rootlibdir=/lib      \
+            --enable-manpages           \
+            --disable-static            \
+            --config-cache >>"$LOGFILE" 2>&1
+}
+
+build()
+{
+    cd "$BUILD_PATH"
+    LIBRARY_PATH=/tools/lib make "$SILENT_MAKE" "$MAKE_JOBS" >>"$LOGFILE" 2>&1
+}
+
+build_install()
+{
+    cd "$BUILD_PATH"
+    make LD_LIBRARY_PATH=/tools/lib "$SILENT_MAKE" "$MAKE_JOBS" install >>"$LOGFILE" 2>&1
+}
+
+post_install()
+{
+    cd "${TMP}"
+    make "$SILENT_MAKE" "$MAKE_JOBS" -f udev-lfs-20171102/Makefile.lfs install >>"$LOGFILE" 2>&1
+    [ $? -ne 0 ] && return 1
+    LD_LIBRARY_PATH=/tools/lib udevadm hwdb --update
+}
+
+cleanup()
+{
+    default_cleanup "$TMP"/"$NAME"-"$VERSION"
+    default_cleanup "$TMP"/udev-lfs-20171102
+}
+
+. "$(dirname "$0")"/../common/common_exec

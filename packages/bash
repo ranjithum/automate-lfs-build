@@ -1,0 +1,33 @@
+#!/bin/bash
+
+. "$(dirname "$0")"/../common/common_source
+NAME=bash
+VERSION=$BASH_VER
+TARFILE=$NAME-$VERSION.tar.gz
+FETCH_URL="http://ftp.gnu.org/gnu/bash/$TARFILE"
+
+fetch()
+{
+    # wget is not availabe in chroot, hence prefetch it
+    if [ ! -f "${SRCDIR}"/"$TARFILE" ]; then
+        echo "This package is not availabe.. Please download it manually and place it inside /lfs-source folder"
+        return 1
+    fi
+}
+
+configure()
+{
+    cd "$TMP"/"$NAME"-"$VERSION"
+    mkdir build; cd build; BUILD_PATH=$(pwd)
+
+    ../configure --prefix=/usr --docdir=/usr/share/doc/bash-5.0 --without-bash-malloc --with-installed-readline >>"$LOGFILE" 2>&1
+}
+
+post_install()
+{
+    {
+        mv -vf /usr/bin/bash /bin
+    } >>"$LOGFILE" 2>&1 
+}
+
+. "$(dirname "$0")"/../common/common_exec

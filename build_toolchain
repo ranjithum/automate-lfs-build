@@ -1,0 +1,42 @@
+#!/bin/bash
+
+if [ "$(id -u)" = 0 ]; then
+	echo "$0 script need to run as lfs user"
+	exit 1
+fi
+
+validate_environment()
+{
+    # TODO - Validate environment varaibles
+    if [ "$PATH" != "/tools/bin:/bin:/usr/bin" ]; then
+        echo "Env PATH should be /tools/bin:/bin:/usr/bin"
+        exit 1
+    fi
+
+    if [ -z "$LFS" ]; then
+        echo "LFS env not found"
+        exit 1
+    fi
+
+    if [ -z "$LFS_TGT" ]; then
+        echo "LFS_TGT env not found"
+        exit 1
+    fi
+}
+
+build_toolchain()
+{
+    for script in $(ls toolchain/)
+    do
+        echo "Building $script start - $(date)"
+        sh $(dirname $0)/toolchain/"$script"
+        if [ $? -ne 0 ]; then
+            echo "Building $script failed.. exiting"
+            exit 1
+        fi
+        echo "Building $script complete - $(date)"
+    done
+}
+
+validate_environment
+build_toolchain

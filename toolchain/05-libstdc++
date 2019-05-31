@@ -1,0 +1,26 @@
+#!/bin/bash
+
+. "$(dirname "$0")"/../common/common_source
+NAME=gcc
+VERSION=${GCC_VER}
+FETCH_URL="http://ftp.gnu.org/gnu/gcc/gcc-8.2.0/$NAME-$VERSION.tar.xz"
+TARFILE=$NAME-$VERSION.tar.xz
+
+configure()
+{
+    cd "$TMP"/"$NAME"-"$VERSION"
+    mkdir build
+    cd build
+
+    BUILD_PATH=$(pwd)
+
+    ../libstdc++-v3/configure --host="$LFS_TGT"                     \
+        --prefix=/tools                                             \
+        --disable-multilib                                          \
+        --disable-nls                                               \
+        --disable-libstdcxx-threads                                 \
+        --disable-libstdcxx-pch                                     \
+        --with-gxx-include-dir=/tools/"$LFS_TGT"/include/c++/8.2.0 >>"$LOGFILE" 2>&1
+}
+
+. "$(dirname "$0")"/../common/common_exec

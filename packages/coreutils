@@ -1,0 +1,64 @@
+#!/bin/bash
+
+. "$(dirname "$0")"/../common/common_source
+NAME=coreutils
+VERSION=$COREUTILS_VER
+TARFILE=$NAME-$VERSION.tar.xz
+FETCH_URL="http://ftp.gnu.org/gnu/coreutils/$TARFILE"
+FETCH_PATCH="http://www.linuxfromscratch.org/patches/lfs/8.4/coreutils-8.30-i18n-1.patch"
+
+fetch()
+{
+    # wget is not availabe in chroot, hence prefetch it
+    if [ ! -f "${SRCDIR}"/"$TARFILE" ]; then
+        echo "This package is not availabe.. Please download it manually and place it inside /lfs-source folder"
+        return 1
+    fi
+
+    if [ ! -f "${SRCDIR}"/coreutils-8.30-i18n-1.patch ]; then
+        echo "$FETCH_PATCH not availabe.. Please download it manually and place it inside /lfs-source folder"
+        return 1
+    fi
+}
+
+patchup()
+{
+    cd "$TMP"/"$NAME"-"$VERSION"
+    patch -Nfp1 -i "$SRCDIR"/coreutils-8.30-i18n-1.patch >>"$LOGFILE" 2>&1
+}
+
+pre_configure()
+{
+    cd "$TMP"/"$NAME"-"$VERSION"
+    autoreconf -fiv >>"$LOGFILE" 2>&1
+}
+
+configure()
+{
+    cd "$TMP"/"$NAME"-"$VERSION"
+    BUILD_PATH=$(pwd)
+
+    FORCE_UNSAFE_CONFIGURE=1 ./configure --prefix=/usr --enable-no-install-program=kill,uptime >>"$LOGFILE" 2>&1
+}
+
+build()
+{
+    cd "$BUILD_PATH"
+    FORCE_UNSAFE_CONFIGURE=1 make "$SILENT_MAKE" "$MAKE_JOBS" >>"$LOGFILE" 2>&1
+}
+
+post_install()
+{
+    cd "$BUILD_PATH"
+    {
+        mv -v /usr/bin/{cat,chgrp,chmod,chown,cp,date,dd,df,echo} /bin
+        mv -v /usr/bin/{false,ln,ls,mkdir,mknod,mv,pwd,rm} /bin
+        mv -v /usr/bin/{rmdir,stty,sync,true,uname} /bin
+        mv -v /usr/bin/chroot /usr/sbin
+        mv -v /usr/share/man/man1/chroot.1 /usr/share/man/man8/chroot.8
+        sed -i s/\"1\"/\"8\"/1 /usr/share/man/man8/chroot.8
+        mv -v /usr/bin/{head,nice,sleep,touch} /bin
+    } >>"$LOGFILE" 2>&1
+}
+
+. "$(dirname "$0")"/../common/common_exec

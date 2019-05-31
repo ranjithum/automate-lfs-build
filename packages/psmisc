@@ -1,0 +1,31 @@
+#!/bin/bash
+
+. "$(dirname "$0")"/../common/common_source
+NAME=psmisc
+VERSION=$PSMISC_VER
+FETCH_URL="https://sourceforge.net/projects/psmisc/files/psmisc/$NAME-$VERSION.tar.xz"
+TARFILE=$NAME-$VERSION.tar.xz
+
+fetch()
+{
+    # wget is not availabe in chroot, hence prefetch it
+    if [ ! -f "${SRCDIR}"/"$TARFILE" ]; then
+        echo "This package is not availabe.. Please download it manually and place it inside /lfs-source folder"
+        return 1
+    fi
+}
+
+configure()
+{
+    default_configure_chroot "$TMP"/"$NAME"-"$VERSION"
+}
+
+post_install()
+{
+    {
+        mv -v /usr/bin/fuser   /bin
+        mv -v /usr/bin/killall /bin
+    } >>"$LOGFILE" 2>&1
+}
+
+. "$(dirname "$0")"/../common/common_exec

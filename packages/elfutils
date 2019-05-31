@@ -1,0 +1,34 @@
+#!/bin/bash
+
+. "$(dirname "$0")"/../common/common_source
+NAME=elfutils
+VERSION=${ELFUTILS_VER}
+TARFILE=$NAME-$VERSION.tar.bz2
+FETCH_URL="https://sourceware.org/ftp/elfutils/0.176/$TARFILE"
+
+fetch()
+{
+    # wget is not availabe in chroot, hence prefetch it
+    :
+}
+
+configure()
+{
+    default_configure_chroot "$TMP"/"$NAME"-"$VERSION"
+}
+
+build()
+{
+    cd "$BUILD_PATH"
+    make -ik "$SILENT_MAKE" "$MAKE_JOBS" >>"$LOGFILE" 2>&1
+    return 0
+}
+
+build_install()
+{
+    cd "$BUILD_PATH"
+    make -ik "$SILENT_MAKE" "$MAKE_JOBS" -C libelf install >>"$LOGFILE" 2>&1
+    return 0
+}
+
+. "$(dirname "$0")"/../common/common_exec

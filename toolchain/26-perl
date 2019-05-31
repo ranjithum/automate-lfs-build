@@ -1,0 +1,36 @@
+#!/bin/bash
+
+. "$(dirname "$0")"/../common/common_source
+NAME=perl
+VERSION=${PERL_VER}
+FETCH_URL="https://www.cpan.org/src/5.0/$NAME-$VERSION.tar.xz"
+TARFILE=$NAME-$VERSION.tar.xz
+
+configure()
+{
+    cd "$TMP"/"$NAME"-"$VERSION"
+    BUILD_PATH=$(pwd)
+
+    sh Configure -des -Dprefix=/tools -Dlibs=-lm -Uloclibpth -Ulocincpth >>"$LOGFILE" 2>&1
+}
+
+build()
+{
+    cd "$BUILD_PATH"
+    make "$SILENT_MAKE" "$MAKE_JOBS" >>"$LOGFILE" 2>&1
+    if [ $? -ne 0 ]; then
+        > ext.libs
+	make "$SILENT_MAKE" "$MAKE_JOBS" >>"$LOGFILE" 2>&1
+    fi
+}
+
+build_install()
+{
+    cd "$BUILD_PATH"
+    {
+    cp -v perl cpan/podlators/scripts/pod2man /tools/bin
+    mkdir -pv /tools/lib/perl5/5.28.1; cp -Rv lib/* /tools/lib/perl5/5.28.1
+    } >>"$LOGFILE" 2>&1
+}
+
+. "$(dirname "$0")"/../common/common_exec

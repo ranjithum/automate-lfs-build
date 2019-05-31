@@ -1,0 +1,35 @@
+#!/bin/bash
+
+. "$(dirname "$0")"/../common/common_source
+NAME=man-db
+VERSION=$MANDB_VER
+TARFILE=$NAME-$VERSION.tar.xz
+FETCH_URL="http://download.savannah.gnu.org/releases/man-db/$TARFILE"
+
+fetch()
+{
+    # wget is not availabe in chroot, hence prefetch it
+    if [ ! -f "${SRCDIR}"/"$TARFILE" ]; then
+        echo "This package is not availabe.. Please download it manually and place it inside /lfs-source folder"
+        return 1
+    fi
+}
+
+configure()
+{
+    cd "$TMP"/"$NAME"-"$VERSION"
+
+    mkdir build; cd build; BUILD_PATH=$(pwd)
+    ../configure --prefix=/usr                         \
+            --docdir=/usr/share/doc/man-db-2.8.5    \
+            --sysconfdir=/etc                       \
+            --disable-setuid                        \
+            --enable-cache-owner=bin                \
+            --with-browser=/usr/bin/lynx            \
+            --with-vgrind=/usr/bin/vgrind           \
+            --with-grap=/usr/bin/grap               \
+            --with-systemdtmpfilesdir=              \
+            --with-systemdsystemunitdir= >>"$LOGFILE" 2>&1
+}
+
+. "$(dirname "$0")"/../common/common_exec

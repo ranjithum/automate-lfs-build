@@ -1,0 +1,32 @@
+#!/bin/bash
+
+. "$(dirname "$0")"/../common/common_source
+NAME=binutils
+VERSION=${BINUTILS_VER}
+FETCH_URL="http://ftp.gnu.org/gnu/binutils/$NAME-$VERSION.tar.xz"
+TARFILE=$NAME-$VERSION.tar.xz
+
+configure()
+{
+    cd "$TMP"/"$NAME"-"$VERSION"
+    mkdir build
+    cd build
+    BUILD_PATH=$(pwd)
+    ../configure --prefix=/tools        \
+            --with-sysroot="$LFS"       \
+            --with-lib-path=/tools/lib  \
+            --target="$LFS_TGT"         \
+            --disable-nls               \
+            --disable-werror >>"$LOGFILE" 2>&1
+}
+
+post_build()
+{
+    {
+	case $(uname -m) in
+		x86_64) mkdir -v /tools/lib && ln -sv lib /tools/lib64 ;;
+	esac
+    } >>"$LOGFILE" 2>&1
+}
+
+. "$(dirname "$0")"/../common/common_exec

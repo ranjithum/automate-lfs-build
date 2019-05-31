@@ -1,0 +1,14 @@
+#!/bin/bash
+
+. "$(dirname "$0")"/../common/common_source
+NAME=gzip
+VERSION=${GZIP_VER}
+FETCH_URL="http://ftp.gnu.org/gnu/gzip/$NAME-$VERSION.tar.xz"
+TARFILE=$NAME-$VERSION.tar.xz
+
+configure()
+{
+    default_configure "$TMP"/"$NAME"-"$VERSION"
+}
+
+. "$(dirname "$0")"/../common/common_exec

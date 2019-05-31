@@ -1,0 +1,57 @@
+#!/bin/bash
+
+. "$(dirname "$0")"/../common/common_source
+NAME=perl
+VERSION=$PERL_VER
+TARFILE=$NAME-$VERSION.tar.xz
+FETCH_URL="https://www.cpan.org/src/5.0/$TARFILE"
+
+fetch()
+{
+    # wget is not availabe in chroot, hence prefetch it
+    if [ ! -f "${SRCDIR}"/"$TARFILE" ]; then
+        echo "This package is not availabe.. Please download it manually and place it inside /lfs-source folder"
+        return 1
+    fi
+}
+
+patchup()
+{
+    cd "$TMP"/"$NAME"-"$VERSION"
+    echo "127.0.0.1 localhost $(hostname)" > /etc/hosts
+    export BUILD_ZLIB=False
+    export BUILD_BZIP2=0
+}
+
+configure()
+{
+    cd "$TMP"/"$NAME"-"$VERSION"
+    BUILD_PATH=$(pwd)
+    sh Configure \
+        -des \
+        -Dprefix=/usr \
+        -Dvendorprefix=/usr \
+        -Dman1dir=/usr/share/man/man1 \
+        -Dman3dir=/usr/share/man/man3 \
+        -Dpager="/usr/bin/less -isR" \
+        -Duseshrplib -Dusethreads >>"$LOGFILE" 2>&1
+}
+
+build()
+{
+    cd "$BUILD_PATH"
+    make "$SILENT_MAKE" "$MAKE_JOBS" -ik >>"$LOGFILE" 2>&1
+}
+
+build_install()
+{
+    cd "$BUILD_PATH"
+    make -ik "$SILENT_MAKE" "$MAKE_JOBS" install >>"$LOGFILE" 2>&1
+}
+
+post_build()
+{
+    unset BUILD_ZLIB BUILD_BZIP2
+}
+
+. "$(dirname "$0")"/../common/common_exec

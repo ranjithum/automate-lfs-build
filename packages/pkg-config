@@ -1,0 +1,26 @@
+#!/bin/bash
+
+. "$(dirname "$0")"/../common/common_source
+NAME=pkg-config
+VERSION=$PKGCONFIG_VER
+TARFILE=$NAME-$VERSION.tar.gz
+FETCH_URL="https://pkg-config.freedesktop.org/releases/$TARFILE"
+
+fetch()
+{
+    # wget is not availabe in chroot, hence prefetch it
+    if [ ! -f "${SRCDIR}"/"$TARFILE" ]; then
+        echo "This package is not availabe.. Please download it manually from $FETCH_URL and place it inside /lfs-source folder"
+        return 1
+    fi
+}
+
+configure()
+{
+    cd "$TMP"/"$NAME"-"$VERSION"
+    mkdir build; cd build; BUILD_PATH=$(pwd)
+
+    ../configure --prefix=/usr --with-internal-glib --disable-host-tool --docdir=/usr/share/doc/pkg-config-0.29.2 >>"$LOGFILE" 2>&1
+}
+
+. "$(dirname "$0")"/../common/common_exec

@@ -1,0 +1,29 @@
+#!/bin/bash
+
+. "$(dirname "$0")"/../common/common_source
+NAME=autoconf
+VERSION=$AUTOCONF_VER
+TARFILE=$NAME-$VERSION.tar.xz
+FETCH_URL="http://ftp.gnu.org/gnu/autoconf/$TARFILE"
+
+fetch()
+{
+    # wget is not availabe in chroot, hence prefetch it
+    if [ ! -f "${SRCDIR}"/"$TARFILE" ]; then
+        echo "This package is not availabe.. Please download it manually and place it inside /lfs-source folder"
+        return 1
+    fi
+}
+
+patchup()
+{
+    cd "$TMP"/"$NAME"-"$VERSION"
+    sed '361 s/{/\\{/' -i bin/autoscan.in
+}
+
+configure()
+{
+    default_configure_chroot "$TMP"/"$NAME"-"$VERSION"
+}
+
+. "$(dirname "$0")"/../common/common_exec

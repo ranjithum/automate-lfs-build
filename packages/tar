@@ -1,0 +1,38 @@
+#!/bin/bash
+
+. "$(dirname "$0")"/../common/common_source
+NAME=tar
+VERSION=$TAR_VER
+TARFILE=$NAME-$VERSION.tar.xz
+FETCH_URL="http://ftp.gnu.org/gnu/tar/$TARFILE"
+
+fetch()
+{
+    # wget is not availabe in chroot, hence prefetch it
+    if [ ! -f "${SRCDIR}"/"$TARFILE" ]; then
+        echo "This package is not availabe.. Please download it manually and place it inside /lfs-source folder"
+        return 1
+    fi
+}
+
+patchup()
+{
+    cd "$TMP"/"$NAME"-"$VERSION"
+    sed -i 's/abort.*/FALLTHROUGH;/' src/extract.c
+}
+
+configure()
+{
+    cd "$TMP"/"$NAME"-"$VERSION"
+    mkdir build; cd build; BUILD_PATH=$(pwd)
+
+    FORCE_UNSAFE_CONFIGURE=1 ../configure --prefix=/usr --bindir=/bin  >>"$LOGFILE" 2>&1
+}
+
+post_install()
+{
+    cd "$BUILD_PATH"
+    make "$SILENT_MAKE" "$MAKE_JOBS" -C doc install-html docdir=/usr/share/doc/tar-1.31 >>"$LOGFILE" 2>&1
+}
+
+. "$(dirname "$0")"/../common/common_exec

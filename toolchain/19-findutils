@@ -1,0 +1,24 @@
+#!/bin/bash
+
+. "$(dirname "$0")"/../common/common_source
+NAME=findutils
+VERSION=${FINDUTILS_VER}
+FETCH_URL="http://ftp.gnu.org/gnu/findutils/$NAME-$VERSION.tar.gz"
+TARFILE=$NAME-$VERSION.tar.gz
+
+patchup()
+{
+    {
+    cd "$TMP"/"$NAME"-"$VERSION"
+    sed -i 's/IO_ftrylockfile/IO_EOF_SEEN/' gl/lib/*.c
+    sed -i '/unistd/a #include <sys/sysmacros.h>' gl/lib/mountlist.c
+    echo "#define _IO_IN_BACKUP 0x100" >> gl/lib/stdio-impl.h
+    } >>"$LOGFILE" 2>&1
+}
+
+configure()
+{
+    default_configure "$TMP"/"$NAME"-"$VERSION"
+}
+
+. "$(dirname "$0")"/../common/common_exec

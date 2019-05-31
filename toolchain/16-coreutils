@@ -1,0 +1,19 @@
+#!/bin/bash
+
+. "$(dirname "$0")"/../common/common_source
+NAME=coreutils
+VERSION=${COREUTILS_VER}
+FETCH_URL="http://ftp.gnu.org/gnu/coreutils/$NAME-$VERSION.tar.xz"
+TARFILE=$NAME-$VERSION.tar.xz
+
+configure()
+{
+    cd "$TMP"/"$NAME"-"$VERSION"
+    mkdir build
+    cd build
+    BUILD_PATH=$(pwd)
+
+    ../configure --prefix=/tools --enable-install-program=hostname >>"$LOGFILE" 2>&1
+}
+
+. "$(dirname "$0")"/../common/common_exec

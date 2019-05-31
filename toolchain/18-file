@@ -1,0 +1,14 @@
+#!/bin/bash
+
+. "$(dirname "$0")"/../common/common_source
+NAME=file
+VERSION=${FILE_VER}
+FETCH_URL="ftp://ftp.astron.com/pub/file/$NAME-$VERSION.tar.gz"
+TARFILE=$NAME-$VERSION.tar.gz
+
+configure()
+{
+    default_configure "$TMP"/"$NAME"-"$VERSION"
+}
+
+. "$(dirname "$0")"/../common/common_exec

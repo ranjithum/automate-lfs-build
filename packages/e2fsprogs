@@ -1,0 +1,49 @@
+#!/bin/bash
+
+. "$(dirname "$0")"/../common/common_source
+NAME=e2fsprogs
+VERSION=$E2FSPROGS_VER
+TARFILE=$NAME-$VERSION.tar.gz
+FETCH_URL="https://downloads.sourceforge.net/project/e2fsprogs/e2fsprogs/v1.44.5/$TARFILE"
+
+fetch()
+{
+    # wget is not availabe in chroot, hence prefetch it
+    if [ ! -f "${SRCDIR}"/"$TARFILE" ]; then
+        echo "This package is not availabe.. Please download it manually and place it inside /lfs-source folder"
+        return 1
+    fi
+}
+
+configure()
+{
+    cd "$TMP"/"$NAME"-"$VERSION"
+    mkdir build
+    cd build
+    BUILD_PATH=$(pwd)
+
+    ../configure --prefix=/usr  \
+        --bindir=/bin           \
+        --with-root-prefix=""   \
+        --enable-elf-shlibs >>"$LOGFILE" 2>&1
+}
+
+post_install()
+{
+    cd $BUILD_PATH
+    make "$SILENT_MAKE" "$MAKE_JOBS" install-libs >>"$LOGFILE" 2>&1
+    [ $? -ne 0 ] && return 1
+
+    {
+    chmod -v u+w /usr/lib/{libcom_err,libe2p,libext2fs,libss}.a
+    gunzip -v /usr/share/info/libext2fs.info.gz
+    install-info --dir-file=/usr/share/info/dir /usr/share/info/libext2fs.info
+    makeinfo -o      doc/com_err.info ../lib/et/com_err.texinfo
+    install -v -m644 doc/com_err.info /usr/share/info
+    install-info --dir-file=/usr/share/info/dir /usr/share/info/com_err.info
+    makeinfo -o      doc/com_err.info lib/et/com_err.texinfo
+    cp ../contrib/populate-extfs.sh /usr/sbin/
+    }  >>"$LOGFILE" 2>&1
+}
+
+. "$(dirname "$0")"/../common/common_exec

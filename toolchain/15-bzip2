@@ -1,0 +1,21 @@
+#!/bin/bash
+
+. "$(dirname "$0")"/../common/common_source
+NAME=bzip2
+VERSION=${BZIP_VER}
+FETCH_URL="http://anduin.linuxfromscratch.org/LFS/$NAME-$VERSION.tar.gz"
+TARFILE=$NAME-$VERSION.tar.gz
+
+configure()
+{
+    cd "$TMP"/"$NAME"-"$VERSION"
+    BUILD_PATH=$(pwd)
+}
+
+build_install()
+{
+    cd "$BUILD_PATH"
+    make PREFIX=/tools "$SILENT_MAKE" "$MAKE_JOBS" install >>"$LOGFILE" 2>&1
+}
+
+. "$(dirname "$0")"/../common/common_exec

@@ -1,0 +1,36 @@
+#!/bin/bash
+
+. "$(dirname "$0")"/../common/common_source
+NAME=iproute2
+VERSION=$IPROUTE_VER
+TARFILE=$NAME-$VERSION.tar.xz
+FETCH_URL="https://www.kernel.org/pub/linux/utils/net/iproute2/$TARFILE"
+
+fetch()
+{
+    # wget is not availabe in chroot, hence prefetch it
+    if [ ! -f "${SRCDIR}"/"$TARFILE" ]; then
+        echo "This package is not availabe.. Please download it manually and place it inside /lfs-source folder"
+        return 1
+    fi
+}
+
+patchup()
+{
+    cd "$TMP"/"$NAME"-"$VERSION"
+    sed -i /ARPD/d Makefile; rm -f man/man8/arpd.8
+    sed -i 's/.m_ipt.o//' tc/Makefile
+}
+
+configure()
+{
+    cd "$TMP"/"$NAME"-"$VERSION"
+    BUILD_PATH=$(pwd)
+}
+
+build_install()
+{
+    make "$SILENT_MAKE" "$MAKE_JOBS" DOCDIR=/usr/share/doc/iproute2-4.20.0 install >>"$LOGFILE" 2>&1
+}
+
+. "$(dirname "$0")"/../common/common_exec

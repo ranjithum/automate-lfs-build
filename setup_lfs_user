@@ -1,0 +1,66 @@
+#!/bin/bash
+
+validate_lfs_mountpoint()
+{
+    if [ -z "$LFS" ]; then
+        echo "LFS env is empty.. Please export LFS environment variable"
+        exit 1
+    fi
+
+    if [ -z "$STRICTMOUNTPONITCHECK" ]; then
+        return
+    fi
+    
+    if ! mountpoint -q "$LFS"; then
+        echo "$LFS directory is not mounted anywhere.. exiting"
+        exit 1
+    fi
+}
+
+setup_lfs_user()
+{
+    echo "Setting up lfs user and group"
+
+    groupadd -f lfs
+
+    if ! id -u lfs >/dev/null 2>&1; then
+        useradd -s /bin/bash -g lfs -m -k /dev/null lfs
+        echo 'lfs:lfs'| chpasswd
+    fi
+
+    [ ! -d "$LFS"/tools ] && mkdir -p "$LFS"/tools
+    [ ! -d "$LFS"/lfs-source ] && mkdir -p "$LFS"/lfs-source
+    [ ! -L /tools ] && ln -s "$LFS"/tools /
+    [ ! -L /lfs-source ] && ln -s "$LFS"/lfs-source /
+    [ -L /home/lfs/automate-lfs-build ] && rm /home/lfs/automate-lfs-build
+
+    ln -s "$LFS"/automate-lfs-build /home/lfs/automate-lfs-build
+    chown lfs "$LFS"/tools "$LFS"/lfs-source "$LFS"/automate-lfs-build
+
+    echo "Setting up lfs user and group complete"
+}
+
+setup_lfs_bash()
+{
+    echo "Setting up bash for lfs user"
+    su lfs - -c "cat > ~/.bash_profile << EOF
+exec env -i HOME=\$HOME TERM=\$TERM PS1='\u:\w\$ ' /bin/bash
+EOF"
+
+    su lfs - -c "cat > ~/.bashrc << EOF
+set +h
+umask 022
+LFS=/mnt/lfs
+LC_ALL=POSIX
+LFS_TGT=$(uname -m)-lfs-linux-gnu
+PATH=/tools/bin:/bin:/usr/bin
+export LFS LC_ALL LFS_TGT PATH
+EOF"
+
+    echo "Setting up bash for lfs user complete"
+}
+
+validate_lfs_mountpoint
+setup_lfs_user
+setup_lfs_bash
+echo "Please login to lfs user using \"su - lfs\" and execute \"build_toolchain\" present inside \"~/automate-lfs-build\" script"

@@ -1,0 +1,30 @@
+#!/bin/bash
+
+. "$(dirname "$0")"/../common/common_source
+NAME=man-pages
+VERSION=${MANPAGES_VER}
+TARFILE=${NAME}-${VERSION}.tar.xz
+FETCH_URL="https://www.kernel.org/pub/linux/docs/man-pages/$TARFILE"
+
+fetch()
+{
+    # wget is not availabe in chroot, hence prefetch it
+    if [ ! -f "${SRCDIR}"/"$TARFILE" ]; then
+        echo "This package is not availabe.. Please download it manually and place it inside /lfs-source folder"
+        return 1
+    fi
+}
+
+configure()
+{
+    # Set only the build-path
+    BUILD_PATH="${TMP}"/"${NAME}"-"${VERSION}" 
+}
+
+build()
+{
+    # Do Nothing
+    :
+}
+
+. "$(dirname "$0")"/../common/common_exec

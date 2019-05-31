@@ -1,0 +1,39 @@
+#!/bin/bash
+
+. "$(dirname "$0")"/../common/common_source
+NAME=sed
+VERSION=$SED_VER
+TARFILE=$NAME-$VERSION.tar.xz
+FETCH_URL="http://ftp.gnu.org/gnu/sed/$TARFILE"
+
+fetch()
+{
+    # wget is not availabe in chroot, hence prefetch it
+    if [ ! -f "${SRCDIR}"/"$TARFILE" ]; then
+        echo "This package is not availabe.. Please download it manually from $FETCH_URL and place it inside /lfs-source folder"
+        return 1
+    fi
+}
+
+patchup()
+{
+    cd "$TMP"/"$NAME"-"$VERSION"
+    sed -i 's/usr/tools/'                 build-aux/help2man
+    sed -i 's/testsuite.panic-tests.sh//' Makefile.in
+}
+
+configure()
+{
+    cd "$TMP"/"$NAME"-"$VERSION"
+    mkdir build; cd build; BUILD_PATH=$(pwd)
+
+    ../configure --prefix=/usr --bindir=/bin >>"$LOGFILE" 2>&1
+}
+
+post_build()
+{
+    cd "$BUILD_PATH"
+    make "$SILENT_MAKE" "$MAKE_JOBS" html >>"$LOGFILE" 2>&1
+}
+
+. "$(dirname "$0")"/../common/common_exec

@@ -1,0 +1,34 @@
+#!/bin/bash
+
+. "$(dirname "$0")"/../common/common_source
+NAME=glibc
+VERSION=${GLIBC_VER}
+FETCH_URL="http://ftp.gnu.org/gnu/glibc/$NAME-$VERSION.tar.xz"
+TARFILE=$NAME-$VERSION.tar.xz
+
+configure()
+{
+    cd "$TMP"/"$NAME"-"$VERSION"
+    mkdir build
+    cd build
+    BUILD_PATH=$(pwd)
+    ../configure    --prefix=/tools                 \
+            --host="$LFS_TGT"                       \
+            --build="$(../scripts/config.guess)"    \
+            --enable-kernel=3.2                     \
+            --with-headers=/tools/include >>"$LOGFILE" 2>&1
+}
+
+test_build()
+{
+    echo 'int main(){}' > dummy.c
+    $LFS_TGT-gcc dummy.c
+
+    if ! readelf -l a.out | grep ': /tools' >/dev/null 2>&1; then
+        return 1
+    fi
+    rm -rf a.out dummy.c
+    return 0
+}
+
+. "$(dirname "$0")"/../common/common_exec

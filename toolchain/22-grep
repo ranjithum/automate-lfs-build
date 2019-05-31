@@ -1,0 +1,14 @@
+#!/bin/bash
+
+. "$(dirname "$0")"/../common/common_source
+NAME=grep
+VERSION=${GREP_VER}
+FETCH_URL="http://ftp.gnu.org/gnu/grep/$NAME-$VERSION.tar.xz"
+TARFILE=$NAME-$VERSION.tar.xz
+
+configure()
+{
+    default_configure "$TMP"/"$NAME"-"$VERSION"
+}
+
+. "$(dirname "$0")"/../common/common_exec

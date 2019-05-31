@@ -1,0 +1,36 @@
+#!/bin/bash
+
+. "$(dirname "$0")"/../common/common_source
+NAME=xz
+VERSION=$XZ_VER
+TARFILE=$NAME-$VERSION.tar.xz
+FETCH_URL="https://tukaani.org/xz/$TARFILE"
+
+fetch()
+{
+    # wget is not availabe in chroot, hence prefetch it
+    if [ ! -f "${SRCDIR}"/"$TARFILE" ]; then
+        echo "This package is not availabe.. Please download it manually and place it inside /lfs-source folder"
+        return 1
+    fi
+}
+
+configure()
+{
+    cd "$TMP"/"$NAME"-"$VERSION"
+    mkdir build; cd build; BUILD_PATH=$(pwd)
+
+    ../configure --prefix=/usr --disable-static --docdir=/usr/share/doc/xz-5.2.4 >>"$LOGFILE" 2>&1
+}
+
+post_install()
+{
+    cd "$BUILD_PATH"
+    {
+        mv -v   /usr/bin/{lzma,unlzma,lzcat,xz,unxz,xzcat} /bin
+        mv -v /usr/lib/liblzma.so.* /lib
+        ln -svf ../../lib/$(readlink /usr/lib/liblzma.so) /usr/lib/liblzma.so
+    } >>"$LOGFILE" 2>&1
+}
+
+. "$(dirname "$0")"/../common/common_exec

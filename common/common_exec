@@ -1,0 +1,105 @@
+#!/bin/bash
+
+exec_env()
+{
+    input=$1
+    case "$input" in
+        fetch)
+            if type fetch >/dev/null 2>&1; then
+                fetch
+            else
+                [ ! -f "${SRCDIR}"/"$TARFILE" ] && default_fetch "$FETCH_URL" || return 0
+            fi
+        ;;
+        extract)
+            [ -d "${TMP}"/"${NAME}"-"${VERSION}" ] && rm -rf "${TMP}"/"${NAME}"-"${VERSION}"
+            if type extract >/dev/null 2>&1; then
+                extract
+            else
+                default_extract "${SRCDIR}"/"$TARFILE"
+            fi
+        ;;
+        patchup)
+            type patchup >/dev/null 2>&1 && patchup || return 0
+        ;;
+        pre_configure)
+            type pre_configure >/dev/null 2>&1 && pre_configure || return 0
+        ;;
+        configure)
+            if type configure >/dev/null 2>&1; then
+                configure
+            else
+                return 1
+            fi
+        ;;
+        post_configure)
+            type post_configure >/dev/null 2>&1 && post_configure || return 0
+        ;;
+        pre_build)
+            type pre_build >/dev/null 2>&1 && pre_build || return 0
+        ;;
+        build)
+            if type build >/dev/null 2>&1; then
+               build
+            else
+                cd "$BUILD_PATH"
+                make "$SILENT_MAKE" "$MAKE_JOBS" >>"$LOGFILE" 2>&1
+            fi
+        ;;
+        post_build)
+            type post_build >/dev/null 2>&1 && post_build || return 0
+        ;;
+        pre_install)
+            type pre_install >/dev/null 2>&1 && pre_install || return 0
+        ;;
+        build_install)
+            if type build_install >/dev/null 2>&1; then
+                build_install
+            else
+                cd "$BUILD_PATH"
+                make "$SILENT_MAKE" "$MAKE_JOBS" install >>"$LOGFILE" 2>&1
+            fi
+        ;;
+        post_install)
+            if type post_install >/dev/null 2>&1; then
+                post_install
+            fi
+            add_to_filedb 
+        ;;
+        test_build)
+            type test_build >/dev/null 2>&1 && test_build || return 0
+        ;;
+        cleanup)
+            if type cleanup >/dev/null 2>&1; then
+                cleanup
+            else
+                default_cleanup "$TMP"/"$NAME"-"$VERSION"
+            fi
+            NAME=
+            VERSION=
+            FETCH_URL=
+            clear_env
+        ;;
+    esac
+
+    return $?
+}
+
+if grep -w "$ME" "$FILE_DB" >/dev/null 2>&1; then
+    echo "Building $ME already complete, not doing anything.. "
+    exit 0
+fi
+
+for execution in fetch extract patchup pre_configure configure \
+    post_configure pre_build build post_build pre_install build_install \
+    post_install test_build cleanup
+do
+#    echo "Executing $execution"
+    exec_env $execution
+    if [ $? -ne 0 ]; then
+        echo "Failed executing $execution.. exiting"
+        exit 1
+    fi
+#    echo "Executing $execution complete"
+done
+

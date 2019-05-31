@@ -1,0 +1,127 @@
+#!/bin/bash
+
+export IMAGE_NAME="lfs.iso"
+export ISO_DIR="$LFS"/iso
+
+build_iso()
+{
+    {
+    if [ -f "$ISO_DIR"/"$IMAGE_NAME" ]; then
+        echo "iso image already present.. $ISO_DIR/$IMAGE_NAME .. exiting"
+        exit 0
+    fi
+
+    [ -d "$ISO_DIR" ] && rm -rf "$ISO_DIR"
+
+    # Create staging area
+    mkdir -p "$ISO_DIR"
+    mkdir -p "$ISO_DIR"/rootpath
+    mkdir -p "$ISO_DIR"/rootpath/boot/grub/i386-pc/
+
+    # Copy the kernel and initramfs file to staging area
+    cp "$LFS"/boot/* "$ISO_DIR"/rootpath/boot/
+
+    # Copy all the grub utilities to staging area
+    cp -Lrp "$LFS"/usr/lib/grub/i386-pc/* "$ISO_DIR"/rootpath/boot/grub/i386-pc/
+
+    # Simple grub.cfg file
+    cat > "$ISO_DIR"/rootpath/boot/grub/grub.cfg <<EOF
+    set default=0
+    set timeout=1
+
+    menuentry 'Linux From Scratch - Gowda' {
+        echo "Loading kernel"
+        linux /boot/vmlinuz root=/dev/ram0 nmi_watchdog=1 console=tty0 console=ttyS0,115200
+        echo "Loading initrd"
+        initrd /boot/initramfs-lfs-x86.cpio.gz
+    }
+EOF
+
+    # Create a sparse file of 512MB size
+    truncate -s 512M "$ISO_DIR"/root.part
+
+    # Create a ext3 file system
+    "$LFS"/sbin/mke2fs -t ext3 -b 4096 -m 0 -j -F "$ISO_DIR"/root.part
+
+    # Copy/Populate the file from staging area
+    DEBUGFS=$LFS/sbin/debugfs               \
+        "$LFS"/usr/sbin/populate-extfs.sh   \
+        "$ISO_DIR"/rootpath                 \
+        "$ISO_DIR"/root.part
+
+    # Create a GRUB image
+    "$LFS"/usr/bin/grub-mkimage                     \
+        -O i386-pc                                  \
+        -p '(hd0,msdos1)/boot/grub'                 \
+        -d "$ISO_DIR"/rootpath/boot/grub/i386-pc    \
+        -o "$ISO_DIR"/core.img                      \
+        biosdisk ext2 part_msdos part_gpt
+
+    # Create another final image/iso 
+    truncate -s 512M "$ISO_DIR"/"$IMAGE_NAME"
+
+    # Partition the disk and make it bootable
+    sed -e 's/\s*\([\+0-9a-zA-Z]*\).*/\1/' <<EOF | fdisk "$ISO_DIR"/"$IMAGE_NAME"
+o # clear the in memory partition table
+n # new partition
+p # primary partition
+1 # partition number 1
+  # default - start at beginning of disk
+  # Take all the space
+a # select the bootable partition
+w # write the partition table
+EOF
+
+    # We could have made use of dd utility but kpratx is better
+    kpartx -av "$ISO_DIR"/"$IMAGE_NAME"
+    sleep 1
+    dd if="$ISO_DIR"/root.part of=/dev/mapper/loop0p1 bs=4096 conv=sparse
+    kpartx -dv "$ISO_DIR"/"$IMAGE_NAME"
+    sleep 1
+    } >/dev/null 2>&1
+}
+
+write_grub()
+{
+
+python2.7 <<EOF
+
+import os
+import sys
+
+lfs_env = os.environ['LFS']
+iso_dir = os.environ['ISO_DIR']
+img_name_env = os.environ['IMAGE_NAME']
+disk_img = iso_dir + "/" + img_name_env
+
+grub_boot = iso_dir + "/rootpath/boot/grub/i386-pc/boot.img"
+grub_core = iso_dir + "/core.img"
+
+boot = file(grub_boot, "rb").read()
+core = file(grub_core, "rb").read()
+fd = os.open(disk_img, os.O_WRONLY)
+
+os.lseek(fd, 0, os.SEEK_SET)
+os.write(fd, boot[:446])
+os.lseek(fd, 512, os.SEEK_SET)
+os.write(fd, core)
+
+os.close(fd)
+EOF
+    
+}
+
+clean_up()
+{
+    rm -rf "$ISO_DIR"/core.img "$ISO_DIR"/root.part "$ISO_DIR"/rootpath    
+}
+
+build_iso
+write_grub
+clean_up
+
+echo "*****************************************"
+echo "Your iso image is ready - $ISO_DIR/$IMAGE_NAME"
+echo "*****************************************"
+
+unset IMAGE_NAME ISO_DIR

@@ -1,0 +1,36 @@
+#!/bin/bash
+
+. "$(dirname "$0")"/../common/common_source
+NAME=meson
+VERSION=$MESON_VER
+TARFILE=$NAME-$VERSION.tar.gz
+FETCH_URL="https://github.com/mesonbuild/meson/releases/download/0.49.2/$TARFILE"
+
+fetch()
+{
+    # wget is not availabe in chroot, hence prefetch it
+    if [ ! -f "${SRCDIR}"/"$TARFILE" ]; then
+        echo "This package is not availabe.. Please download it manually and place it inside /lfs-source folder"
+        return 1
+    fi
+}
+
+configure()
+{
+    cd "$TMP"/"$NAME"-"$VERSION"
+    BUILD_PATH=$(pwd)
+}
+
+build()
+{
+    cd "$BUILD_PATH"
+    python3 setup.py build >>"$LOGFILE" 2>&1
+}
+
+build_install()
+{
+    cd "$BUILD_PATH"
+    python3 setup.py install --root=dest >>"$LOGFILE" 2>&1
+}
+
+. "$(dirname "$0")"/../common/common_exec

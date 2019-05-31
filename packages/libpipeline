@@ -1,0 +1,23 @@
+#!/bin/bash
+
+. "$(dirname "$0")"/../common/common_source
+NAME=libpipeline
+VERSION=$LIBPIPELINE_VER
+TARFILE=$NAME-$VERSION.tar.gz
+FETCH_URL="http://download.savannah.gnu.org/releases/libpipeline/$TARFILE"
+
+fetch()
+{
+    # wget is not availabe in chroot, hence prefetch it
+    if [ ! -f "${SRCDIR}"/"$TARFILE" ]; then
+        echo "This package is not availabe.. Please download it manually and place it inside /lfs-source folder"
+        return 1
+    fi
+}
+
+configure()
+{
+    default_configure_chroot "$TMP"/"$NAME"-"$VERSION"
+}
+
+. "$(dirname "$0")"/../common/common_exec

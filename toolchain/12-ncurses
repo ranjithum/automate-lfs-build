@@ -1,0 +1,35 @@
+#!/bin/bash
+
+. "$(dirname "$0")"/../common/common_source
+NAME=ncurses
+VERSION=${NCURSES_VER}
+FETCH_URL="http://ftp.gnu.org/gnu/ncurses/$NAME-$VERSION.tar.gz"
+TARFILE=$NAME-$VERSION.tar.gz
+
+patchup()
+{
+    cd "$TMP"/"$NAME"-"$VERSION"
+    sed -i s/mawk// configure
+}
+
+configure()
+{
+    cd "$TMP"/"$NAME"-"$VERSION"
+    mkdir build
+    cd build
+    BUILD_PATH=$(pwd)
+
+    ../configure --prefix=/tools    \
+        --with-shared               \
+        --without-debug             \
+        --without-ada               \
+        --enable-widec              \
+        --enable-overwrite >>"$LOGFILE" 2>&1
+}
+
+post_install()
+{
+    ln -sv libncursesw.so /tools/lib/libncurses.so >>"$LOGFILE" 2>&1
+}
+
+. "$(dirname "$0")"/../common/common_exec

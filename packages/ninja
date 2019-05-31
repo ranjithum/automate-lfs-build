@@ -1,0 +1,51 @@
+#!/bin/bash
+
+. "$(dirname "$0")"/../common/common_source
+NAME=ninja
+VERSION=$NINJA_VER
+TARFILE=$NAME-$VERSION.tar.gz
+FETCH_URL="https://github.com/ninja-build/ninja/archive/v1.9.0/$TARFILE"
+
+fetch()
+{
+    # wget is not availabe in chroot, hence prefetch it
+    if [ ! -f "${SRCDIR}"/"$TARFILE" ]; then
+        echo "This package is not availabe.. Please download it manually and place it inside /lfs-source folder"
+        return 1
+    fi
+}
+
+patchup()
+{
+    cd "$TMP"/"$NAME"-"$VERSION"
+    sed -i '/int Guess/a \
+        int   j = 0;\
+        char* jobs = getenv( "NINJAJOBS" );\
+        if ( jobs != NULL ) j = atoi( jobs );\
+        if ( j > 0 ) return j;\
+        ' src/ninja.cc
+}
+
+configure()
+{
+    cd "$TMP"/"$NAME"-"$VERSION"
+    BUILD_PATH=$(pwd)
+    python3 configure.py --bootstrap >>"$LOGFILE" 2>&1
+}
+
+build()
+{
+    :
+}
+
+build_install()
+{
+    cd "$BUILD_PATH"
+    {
+    install -vm755 ninja /usr/bin/
+    install -vDm644 misc/bash-completion /usr/share/bash-completion/completions/ninja
+    install -vDm644 misc/zsh-completion  /usr/share/zsh/site-functions/_ninja
+    } >>"$LOGFILE" 2>&1
+}
+
+. "$(dirname "$0")"/../common/common_exec

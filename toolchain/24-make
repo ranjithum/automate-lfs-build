@@ -1,0 +1,25 @@
+#!/bin/bash
+
+. "$(dirname "$0")"/../common/common_source
+NAME=make
+VERSION=${MAKE_VER}
+FETCH_URL="http://ftp.gnu.org/gnu/make/$NAME-$VERSION.tar.bz2"
+TARFILE=$NAME-$VERSION.tar.bz2
+
+patchup()
+{
+    cd "$TMP"/"$NAME"-"$VERSION"
+    sed -i '211,217 d; 219,229 d; 232 d' glob/glob.c
+}
+
+configure()
+{
+    cd "$TMP"/"$NAME"-"$VERSION"
+    mkdir build
+    cd build
+    BUILD_PATH=$(pwd)
+
+    ../configure --prefix=/tools --without-guile >>"$LOGFILE" 2>&1
+}
+
+. "$(dirname "$0")"/../common/common_exec

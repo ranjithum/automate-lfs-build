@@ -1,0 +1,49 @@
+#!/bin/bash
+
+. "$(dirname "$0")"/../common/common_source
+NAME=Python
+VERSION=$PYTHON_VER
+TARFILE=$NAME-$VERSION.tar.xz
+FETCH_URL="https://www.python.org/ftp/python/3.7.2/$TARFILE"
+FETCH_PYTHON_DOCS="https://docs.python.org/ftp/python/doc/3.7.2/python-3.7.2-docs-html.tar.bz2"
+
+fetch()
+{
+    # wget is not availabe in chroot, hence prefetch it
+    if [ ! -f "${SRCDIR}"/"$TARFILE" ]; then
+        echo "This package is not availabe.. Please download it manually and place it inside /lfs-source folder"
+        return 1
+    fi
+
+    if [ ! -f "${SRCDIR}"/python-3.7.2-docs-html.tar.bz2 ]; then
+        echo "$FETCH_PYTHON_DOCS not available.. Please download it manually and place it inside /lfs-source folder"
+        return 1
+    fi
+}
+
+configure()
+{
+    cd "$TMP"/"$NAME"-"$VERSION"
+    mkdir build; cd build; BUILD_PATH=$(pwd)
+
+    ../configure --prefix=/usr --enable-shared --with-system-expat --with-system-ffi --with-ensurepip=yes >>"$LOGFILE" 2>&1
+}
+
+post_install()
+{
+    cd "$BUILD_PATH"
+    {
+        chmod -v 755 /usr/lib/libpython3.7m.so
+        chmod -v 755 /usr/lib/libpython3.so
+        install -v -dm755 /usr/share/doc/python-3.7.2/html
+
+        tar \
+            --strip-components=1  \
+            --no-same-owner \
+            --no-same-permissions \
+            -C /usr/share/doc/python-3.7.2/html \
+            -xvf "$TMP"/python-3.7.2-docs-html.tar.bz2
+    } >>"$LOGFILE" 2>&1
+}
+
+. "$(dirname "$0")"/../common/common_exec

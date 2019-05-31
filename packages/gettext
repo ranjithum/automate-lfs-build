@@ -1,0 +1,40 @@
+#!/bin/bash
+
+. "$(dirname "$0")"/../common/common_source
+NAME=gettext
+VERSION=$GETTEXT_VER
+TARFILE=$NAME-$VERSION.tar.xz
+FETCH_URL="http://ftp.gnu.org/gnu/gettext/$TARFILE"
+
+fetch()
+{
+    # wget is not availabe in chroot, hence prefetch it
+    if [ ! -f "${SRCDIR}"/"$TARFILE" ]; then
+        echo "This package is not availabe.. Please download it manually and place it inside /lfs-source folder"
+        return 1
+    fi
+}
+
+patchup()
+{
+    cd "$TMP"/"$NAME"-"$VERSION"
+    sed -i '/^TESTS =/d' gettext-runtime/tests/Makefile.in
+    sed -i 's/test-lock..EXEEXT.//' gettext-tools/gnulib-tests/Makefile.in
+    sed -e '/AppData/{N;N;p;s/\.appdata\./.metainfo./}' \
+    -i gettext-tools/its/appdata.loc
+}
+
+configure()
+{
+    cd "$TMP"/"$NAME"-"$VERSION"
+    mkdir build; cd build; BUILD_PATH=$(pwd)
+
+    ../configure --prefix=/usr  --disable-static --docdir=/usr/share/doc/gettext-0.19.8.1 >>"$LOGFILE" 2>&1
+}
+
+post_install()
+{
+    chmod -v 0755 /usr/lib/preloadable_libintl.so >>"$LOGFILE" 2>&1
+}
+
+. "$(dirname "$0")"/../common/common_exec

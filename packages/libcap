@@ -1,0 +1,45 @@
+#!/bin/bash
+
+. "$(dirname "$0")"/../common/common_source
+NAME=libcap
+VERSION=$LIBCAP_VER
+TARFILE=$NAME-$VERSION.tar.xz
+FETCH_URL="https://www.kernel.org/pub/linux/libs/security/linux-privs/libcap2/$TARFILE"
+
+fetch()
+{
+    # wget is not availabe in chroot, hence prefetch it
+    if [ ! -f "${SRCDIR}"/"$TARFILE" ]; then
+        echo "This package is not availabe.. Please download it manually from $FETCH_URL and place it inside /lfs-source folder"
+        return 1
+    fi
+}
+
+patchup()
+{
+    cd "$TMP"/"$NAME"-"$VERSION"
+    sed -i '/install.*STALIBNAME/d' libcap/Makefile
+}
+
+configure()
+{
+    cd "$TMP"/"$NAME"-"$VERSION"
+    BUILD_PATH=$(pwd)
+}
+
+build_install()
+{
+    cd $BUILD_PATH
+    make "$SILENT_MAKE" "$MAKE_JOBS" RAISE_SETFCAP=no lib=lib prefix=/usr install >>"$LOGFILE" 2>&1
+}
+
+post_install()
+{
+    {
+    chmod -v 755 /usr/lib/libcap.so.2.26
+    mv -v /usr/lib/libcap.so.* /lib
+    ln -sfv ../../lib/$(readlink /usr/lib/libcap.so) /usr/lib/libcap.so
+    } >>"$LOGFILE" 2>&1
+}
+
+. "$(dirname "$0")"/../common/common_exec

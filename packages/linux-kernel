@@ -1,0 +1,38 @@
+#!/bin/bash
+
+. "$(dirname "$0")"/../common/common_source
+NAME=linux
+VERSION=${LINUX_VER}
+TARFILE=${NAME}-${VERSION}.tar.xz
+FETCH_URL="https://www.kernel.org/pub/linux/kernel/v4.x/$TARFILE"
+
+configure()
+{
+    cd "${TMP}"/"${NAME}"-"${VERSION}"
+    mkdir build
+
+    make O=build x86_64_defconfig  >>"$LOGFILE" 2>&1
+    [ $? -ne 0 ] && return 1
+
+    make O=build kvmconfig  >>"$LOGFILE" 2>&1
+    [ $? -ne 0 ] && return 1
+    cd build
+    BUILD_PATH=$(pwd)
+}
+
+build()
+{
+    cd "$BUILD_PATH"
+    make "$MAKE_JOBS"  >>"$LOGFILE" 2>&1
+    make modules >>"$LOGFILE" 2>&1
+}
+
+build_install()
+{
+    cd "$BUILD_PATH"
+
+    make modules_install >>"$LOGFILE" 2>&1
+    make install >>"$LOGFILE" 2>&1
+}
+
+. "$(dirname "$0")"/../common/common_exec

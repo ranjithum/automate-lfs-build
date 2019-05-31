@@ -1,0 +1,41 @@
+#!/bin/bash
+
+. "$(dirname "$0")"/../common/common_source
+NAME=kbd
+VERSION=$KBD_VER
+TARFILE=$NAME-$VERSION.tar.xz
+FETCH_URL="https://www.kernel.org/pub/linux/utils/kbd/$TARFILE"
+FETCH_PATCH="http://www.linuxfromscratch.org/patches/lfs/8.4/kbd-2.0.4-backspace-1.patch"
+
+fetch()
+{
+    # wget is not availabe in chroot, hence prefetch it
+    if [ ! -f "${SRCDIR}"/"$TARFILE" ]; then
+        echo "This package is not availabe.. Please download it manually and place it inside /lfs-source folder"
+        return 1
+    fi
+
+    if [ ! -f "${SRCDIR}"/kbd-2.0.4-backspace-1.patch ]; then
+        echo "$FETCH_PATCH is not availabe.. Please download it manually and place it inside /lfs-source folder"
+        return 1
+    fi
+}
+
+patchup()
+{
+    cd "$TMP"/"$NAME"-"$VERSION"
+    patch -Nfp1 -i "$SRCDIR"/kbd-2.0.4-backspace-1.patch >>"$LOGFILE" 2>&1
+
+    sed -i 's/\(RESIZECONS_PROGS=\)yes/\1no/g' configure
+    sed -i 's/resizecons.8 //' docs/man/man8/Makefile.in
+}
+
+configure()
+{
+    cd "$TMP"/"$NAME"-"$VERSION"
+    mkdir build; cd build; BUILD_PATH=$(pwd)
+
+    PKG_CONFIG_PATH=/tools/lib/pkgconfig ../configure --prefix=/usr --disable-vlock >>"$LOGFILE" 2>&1
+}
+
+. "$(dirname "$0")"/../common/common_exec

@@ -1,0 +1,40 @@
+#!/bin/bash
+
+. "$(dirname "$0")"/../common/common_source
+NAME=busybox
+VERSION=${BUSYBOX_VER}
+FETCH_URL="http://ftp.gnu.org/gnu/glibc/$NAME-$VERSION.tar.bz2"
+TARFILE=$NAME-$VERSION.tar.bz2
+
+fetch()
+{
+    # wget is not availabe in chroot, hence prefetch it
+    :
+}
+
+configure()
+{
+    cd "$TMP"/"$NAME"-"$VERSION"
+    mkdir build
+    
+    make O=build defconfig >>"$LOGFILE" 2>&1
+
+    cp "/automate-lfs-build/config/busybox_config" build/.config
+    [ $? -ne 0 ] && return 1
+
+    cd build
+    BUILD_PATH=$(pwd)
+}
+
+post_install()
+{
+    cd "$BUILD_PATH"
+    {
+        cp -rv _install/bin/* /bin/
+        cp -rv _install/sbin/* /sbin/
+        cp -rv _install/usr/bin/* /usr/bin/
+        cp -rv _install/usr/sbin/* /usr/sbin/
+    } >>"$LOGFILE" 2>&1
+}
+
+. "$(dirname "$0")"/../common/common_exec

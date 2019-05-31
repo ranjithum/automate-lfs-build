@@ -1,0 +1,44 @@
+#!/bin/bash
+
+. "$(dirname "$0")"/../common/common_source
+NAME=inetutils
+VERSION=$INEUTILS_VER
+TARFILE=$NAME-$VERSION.tar.xz
+FETCH_URL="http://ftp.gnu.org/gnu/inetutils/$TARFILE"
+
+fetch()
+{
+    # wget is not availabe in chroot, hence prefetch it
+    if [ ! -f "${SRCDIR}"/"$TARFILE" ]; then
+        echo "This package is not availabe.. Please download it manually and place it inside /lfs-source folder"
+        return 1
+    fi
+}
+
+configure()
+{
+    cd "$TMP"/"$NAME"-"$VERSION"
+    mkdir build; cd build; BUILD_PATH=$(pwd)
+
+    ../configure --prefix=/usr  \
+        --localstatedir=/var \
+        --disable-logger \
+        --disable-whois \
+        --disable-rcp  \
+        --disable-rexec \
+        --disable-rlogin \
+        --disable-rsh \
+        --disable-servers >>"$LOGFILE" 2>&1
+}
+
+post_install()
+{
+    cd "$BUILD_PATH"
+    {
+        mv -v /usr/bin/{hostname,ping,ping6,traceroute} /bin
+        mv -v /usr/bin/ifconfig /sbin
+    } >>"$LOGFILE" 2>&1
+
+}
+
+. "$(dirname "$0")"/../common/common_exec

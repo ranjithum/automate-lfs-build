@@ -1,0 +1,30 @@
+#!/bin/bash
+
+. "$(dirname "$0")"/../common/common_source
+NAME=linux
+VERSION=${LINUX_VER}
+FETCH_URL="https://www.kernel.org/pub/linux/kernel/v4.x/${NAME}-${VERSION}.tar.xz"
+TARFILE=${NAME}-${VERSION}.tar.xz
+
+configure()
+{
+    # Set only the build-path
+    BUILD_PATH="${TMP}"/"${NAME}"-"${VERSION}" 
+}
+
+build()
+{
+    {
+    cd "$BUILD_PATH"
+    make mrproper
+    make "${SILENT_MAKE}" INSTALL_HDR_PATH=dest headers_install
+    } >>"$LOGFILE" 2>&1
+}
+
+build_install()
+{
+    cd "$BUILD_PATH"
+    cp -rv dest/include/* /tools/include/ >>"$LOGFILE" 2>&1
+}
+
+. "$(dirname "$0")"/../common/common_exec

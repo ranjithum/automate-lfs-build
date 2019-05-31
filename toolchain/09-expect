@@ -1,0 +1,43 @@
+#!/bin/bash
+
+. "$(dirname "$0")"/../common/common_source
+NAME=expect
+VERSION=${EXPECT_VER}
+FETCH_URL="https://prdownloads.sourceforge.net/expect/$NAME$VERSION.tar.gz"
+TARFILE=$NAME$VERSION.tar.gz
+
+patchup()
+{
+    cd "$TMP"/"${NAME}${VERSION}"
+    cp -v configure{,.orig} >/dev/null 2>&1 
+    sed 's:/usr/local/bin:/bin:' configure.orig > configure
+}
+
+configure()
+{
+    #cd "$TMP"/"${NAME}${VERSION}"
+    #./configure --prefix=/tools        \
+    #    --with-tcl=/tools/lib           \
+    #    --with-tclinclude=/tools/include >/dev/null 2>&1
+    :
+}
+
+build()
+{
+    #Do Nothing
+    :
+}
+
+build_install()
+{
+    # For somereason building of expect fails 
+    #make "$SILENT_MAKE" "$MAKE_JOBS" SCRIPTS="" install
+    :
+}
+
+cleanup()
+{
+    default_cleanup "$TMP"/"${NAME}${VERSION}"
+}
+
+. "$(dirname "$0")"/../common/common_exec
