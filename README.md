@@ -33,7 +33,7 @@ Scripts must be executed in the same order as shown below
 * iso image has been tested with qemu using below command\
 $ qemu-system-x86_64 -drive format=raw,$LFS/iso/lfs.iso -nographic -enable-kvm -m 512M
 
-* Below procedure should work seemlessly\
+* Below procedure should work seemlessly, considering LFS env has been set\
 $ mkdir -p $LFS/automate-lfs-build\
 $ git clone https://github.com/ranjithum/automate-lfs-build $LFS/automate-lfs-build\
 $ cd $LFS/automate-lfs-build\
