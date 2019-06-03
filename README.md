@@ -31,7 +31,7 @@ Scripts must be executed in the same order as shown below
 * scripts has been tested only on Ubuntu 18.04.1 LTS
 
 * iso image has been tested with qemu using below command\
-$ qemu-system-x86_64 -drive format=raw,$LFS/iso/lfs.iso -nographic -enable-kvm -m 512M
+$ qemu-system-x86_64 -drive format=raw,file=$LFS/iso/lfs.iso -nographic -enable-kvm -m 512M
 
 * Below procedure should work seemlessly, considering LFS env has been set\
 $ mkdir -p $LFS/automate-lfs-build\
