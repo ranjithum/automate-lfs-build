@@ -71,7 +71,7 @@ build_iso()
 EOF
 
     # Create a sparse file of 512MB size
-    truncate -s 512M "$ISO_DIR"/root.part
+    truncate -s 256M "$ISO_DIR"/root.part
 
     # Create a ext3 file system
     "$LFS"/sbin/mke2fs -t ext3 -b 4096 -m 0 -j -F "$ISO_DIR"/root.part
@@ -153,8 +153,8 @@ clean_up()
 build_initramfs
 build_iso
 write_grub
-clean_up
 
 echo "*****************************************"
 echo "Your iso image is ready - $ISO_DIR/$IMAGE_NAME"
 echo "*****************************************"
+clean_up
