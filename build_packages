@@ -10,8 +10,6 @@ if [ "$(id -u)" != 0 ]; then
     exit 1
 fi
 
-[ -z "$INITRAMFSNAME" ] && INITRAMFSNAME=initramfs-lfs-x86.cpio.gz
-
 chown -R root:root "$LFS"/tools "$LFS"/lfs-source "$LFS"/automate-lfs-build
 
 mount_psudoroot()

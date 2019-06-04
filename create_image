@@ -3,6 +3,8 @@
 export IMAGE_NAME="lfs.iso"
 export ISO_DIR="$LFS"/iso
 
+[ -z "$INITRAMFSNAME" ] && INITRAMFSNAME=initramfs-lfs-x86.cpio.gz
+
 build_initramfs()
 {
     echo "Building initramfs..."
@@ -29,7 +31,7 @@ EOM
     "$LFS"/usr/bin/find init bin dev etc lib lib64 mnt opt proc   \
         root run sbin sys usr var                               \
         | "$LFS"/bin/cpio -H newc -o                              \
-        | "$LFS"/bin/gzip -9 > boot/"$INITRAMFSNAME"
+        | "$LFS"/bin/gzip -9 > "$LFS"/boot/"$INITRAMFSNAME"
     echo "Building initramfs complete"
 }
 
