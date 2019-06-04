@@ -206,36 +206,8 @@ strip_packages()
     } >/dev/null 2>&1
 }
 
-build_initramfs()
-{
-    [ -f "$LFS"/boot/initramfs-lfs-x86.cpio.gz ] && rm "$LFS"/boot/initramfs-lfs-x86.cpio.gz
-
-    if [ ! -f "$LFS"/boot/vmlinuz ]; then
-        echo "Kernel was not build.. not creating initramfs"
-        exit 1
-    fi
-
-    cd "$LFS"
-    cat > init <<EOM
-#!/bin/sh
-
-mount -t proc none /proc
-mount -t sysfs none /sys
-
-echo -e "\nBoot took \$(cut -d' ' -f1 /proc/uptime) seconds\n"
-
-exec /bin/sh
-EOM
-    "$LFS"/bin/chmod +x init
-
-    "$LFS"/usr/bin/find init bin dev etc lib lib64 mnt opt proc   \
-        root run sbin sys usr var                               \
-        | "$LFS"/bin/cpio -H newc -o                              \
-        | "$LFS"/bin/gzip -9 > boot/"$INITRAMFSNAME"
-}
 
 prepare_vkfs
 prepare_vkfs_under_chroot
 build_packages_under_chroot
 strip_packages
-build_initramfs

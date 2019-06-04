@@ -3,6 +3,37 @@
 export IMAGE_NAME="lfs.iso"
 export ISO_DIR="$LFS"/iso
 
+build_initramfs()
+{
+    echo "Building initramfs..."
+    [ -f "$LFS"/boot/initramfs-lfs-x86.cpio.gz ] && rm "$LFS"/boot/initramfs-lfs-x86.cpio.gz
+
+    if [ ! -f "$LFS"/boot/vmlinuz ]; then
+        echo "Kernel was not build.. not creating initramfs"
+        exit 1
+    fi
+
+    cd "$LFS"
+    cat > init <<EOM
+#!/bin/sh
+
+mount -t proc none /proc
+mount -t sysfs none /sys
+
+echo -e "\nBoot took \$(cut -d' ' -f1 /proc/uptime) seconds\n"
+
+exec /bin/sh
+EOM
+    "$LFS"/bin/chmod +x init
+
+    "$LFS"/usr/bin/find init bin dev etc lib lib64 mnt opt proc   \
+        root run sbin sys usr var                               \
+        | "$LFS"/bin/cpio -H newc -o                              \
+        | "$LFS"/bin/gzip -9 > boot/"$INITRAMFSNAME"
+    echo "Building initramfs complete"
+}
+
+
 build_iso()
 {
     {
@@ -114,8 +145,10 @@ EOF
 clean_up()
 {
     rm -rf "$ISO_DIR"/core.img "$ISO_DIR"/root.part "$ISO_DIR"/rootpath    
+    unset IMAGE_NAME ISO_DIR
 }
 
+build_initramfs
 build_iso
 write_grub
 clean_up
@@ -123,5 +156,3 @@ clean_up
 echo "*****************************************"
 echo "Your iso image is ready - $ISO_DIR/$IMAGE_NAME"
 echo "*****************************************"
-
-unset IMAGE_NAME ISO_DIR
